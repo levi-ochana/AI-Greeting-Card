@@ -191,6 +191,48 @@ resource "aws_iam_role_policy_attachment" "ecs_task_policy" {
   role       = aws_iam_role.ecs_task_role.name
 }
 
+# Create an S3 bucket
+resource "aws_s3_bucket" "app_data" {
+  bucket = "my-app-data-bucket"
+  acl    = "public-read"  
+
+  tags = {
+    Name = "App Data Bucket"
+  }
+}
+
+# Create an IAM policy for S3 access
+resource "aws_iam_policy" "ecs_s3_access" {
+  name = "ecs-s3-access"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "${aws_s3_bucket.app_data.arn}",
+        "${aws_s3_bucket.app_data.arn}/*"
+      ]
+    }
+  ]
+}
+POLICY
+}
+
+# Attach the IAM policy to the ECS Task Role
+resource "aws_iam_role_policy_attachment" "ecs_task_s3_policy_attachment" {
+  policy_arn = aws_iam_policy.ecs_s3_access.arn
+  role       = aws_iam_role.ecs_task_role.name
+}
+
+
 # Create ECS Task Definition with new IAM Role
 resource "aws_ecs_task_definition" "task" {
   family                   = "fargate-task"
@@ -211,6 +253,12 @@ resource "aws_ecs_task_definition" "task" {
     "containerPort": 5000,
     "hostPort": 5000
   }],
+  "environment": [
+    {
+      "name": "S3_BUCKET_NAME",
+      "value": "${aws_s3_bucket.app_data.bucket}"
+    }
+  ],
   "logConfiguration": {
     "logDriver": "awslogs",
     "options": {
