@@ -8,6 +8,7 @@ import requests
 import boto3
 from template import HTML_TEMPLATE
 
+
 # Load environment variables
 load_dotenv()
 
@@ -88,6 +89,11 @@ def share():
         return jsonify({"url": f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/health_check", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

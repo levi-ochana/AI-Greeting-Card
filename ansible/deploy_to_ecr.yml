@@ -1,6 +1,7 @@
 ---
 - name: Deploy Docker Image to ECR
   hosts: localhost
+  connection: local
   vars_files:
     - vars.yml  
   tasks:
@@ -24,7 +25,7 @@
 
     - name: Build Docker Image
       shell: |
-        docker build -t {{ image_name }} .
+        docker build -t {{ image_name }} -f ../app/Dockerfile .
       when: relevant_changes.rc == 0
 
     - name: Tag Docker Image
