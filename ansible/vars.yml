@@ -1,0 +1,4 @@
+region: "us-west-2"
+account_number: "888577038689"
+image_name: "my-app-image"
+repository_name: "my-ecr-repository"

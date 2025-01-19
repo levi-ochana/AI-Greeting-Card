@@ -1,0 +1,38 @@
+---
+- name: Deploy Docker Image to ECR
+  hosts: localhost
+  vars_files:
+    - vars.yml  
+  tasks:
+    - name: Check for relevant changes in Git (only in app/)
+      shell: |
+        git fetch origin
+        if git diff --quiet origin/main -- app/; then
+          echo "No relevant changes detected in app/."
+          exit 0  # continue with exit code 0 instead of 1
+        else
+          echo "Relevant changes detected in app/."
+        fi
+      register: relevant_changes
+      changed_when: relevant_changes.rc == 0
+      failed_when: false  # prevents failure even if there are no changes
+
+    - name: Login to AWS ECR
+      shell: |
+        aws ecr get-login-password --region {{ region }} | docker login --username AWS --password-stdin {{ account_number }}.dkr.ecr.{{ region }}.amazonaws.com
+      when: relevant_changes.rc == 0
+
+    - name: Build Docker Image
+      shell: |
+        docker build -t {{ image_name }} .
+      when: relevant_changes.rc == 0
+
+    - name: Tag Docker Image
+      shell: |
+        docker tag {{ image_name }} {{ account_number }}.dkr.ecr.{{ region }}.amazonaws.com/{{ repository_name }}:latest
+      when: relevant_changes.rc == 0
+
+    - name: Push Docker Image to ECR
+      shell: |
+        docker push {{ account_number }}.dkr.ecr.{{ region }}.amazonaws.com/{{ repository_name }}:latest
+      when: relevant_changes.rc == 0

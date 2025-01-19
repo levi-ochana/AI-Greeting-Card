@@ -193,9 +193,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_policy" {
 
 # Create an S3 bucket
 resource "aws_s3_bucket" "app_data" {
-  bucket = "my-app-data-bucket"
-  acl    = "public-read"  
-
+  bucket = "no-name-like-this"
   tags = {
     Name = "App Data Bucket"
   }
@@ -218,6 +216,8 @@ resource "aws_iam_policy" "ecs_s3_access" {
       ],
       "Resource": [
         "${aws_s3_bucket.app_data.arn}",
+
+        
         "${aws_s3_bucket.app_data.arn}/*"
       ]
     }

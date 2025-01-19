@@ -1,0 +1,74 @@
+name:  CI/CD Pipeline (Ansible + Terraform)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python for Ansible
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies (Ansible, Terraform, Docker)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip
+        pip install ansible
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update
+        sudo apt-get install terraform
+        sudo apt-get install docker.io
+        sudo systemctl start docker
+        sudo systemctl enable docker
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        region: ${{ secrets.AWS_REGION }}
+
+    - name: Run Ansible Playbook for Docker Update
+      run: |
+        ansible-playbook -i inventory/hosts update-docker.yml
+
+    - name: Apply Terraform Configuration
+      run: |
+        cd terraform
+        terraform init
+        terraform apply -auto-approve
+
+    - name: Get Output URL from Terraform
+      id: terraform-output
+      run: |
+        cd terraform
+        echo "Output URL from Terraform:"
+        URL=$(terraform output -raw web_server_url)
+        echo "URL=$URL" >> $GITHUB_ENV 
+
+    - name: Verify web server is running
+      run: |
+        echo "Checking if the server is running at ${{ env.URL }}"
+        response=$(curl --write-out "%{http_code}" --silent --output /dev/null ${{ env.URL }})
+        if [ "$response" -eq 200 ]; then
+          echo "Server is running correctly."
+        else
+          echo "Server is not responding, HTTP status code: $response"
+          exit 1
+        fi
+
+    - name: Clean up Docker
+      run: |
+        sudo docker system prune -af
