@@ -1,11 +1,11 @@
 
 # AI-Greeting-Card
 
-This project demonstrates a scalable, cloud-based web application that allows users to generate, view, and download greeting cards dynamically using OpenAI's ChatGPT API. The application is deployed on AWS infrastructure, leveraging services like ECS, Fargate, and S3 for scalability, availability, and storage.
+This project demonstrates a cloud-based web application that allows users to generate, view, and download greeting cards using OpenAI API. It’s deployed on AWS using ECS, Fargate, and S3 for scalability and storage. The project uses Terraform for IaC, GitHub Actions for CI/CD, and automates Docker container build and deployment to ECR with Ansible.
 
 ## Features
 
-- **Dynamic Greeting Cards**: Users can generate greeting cards for real-world holidays using the OpenAI GPT API. The card text is generated dynamically and can be downloaded as an image.
+- **Dynamic Greeting Cards**: Users can generate greeting cards for real-world holidays using the OpenAI API. The card text is generated dynamically and can be downloaded as an image.
 - **User-Friendly Web Interface**: A Flask-based web application provides a simple and intuitive interface for interacting with the app.
 
 ### AWS Integration:
